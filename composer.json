@@ -27,7 +27,13 @@
   "authors": [
     {
       "name": "João Batista Neto",
-      "email": "neto.joaobatista@gmail.com"
+      "email": "neto.joaobatista@gmail.com",
+      "version": "v1"
+    }
+    {
+      "name": "Iaponã Pedroza de Andrade",
+      "email": "contato@itstecnologiacriativa.com.br",
+      "version": "v2"
     }
   ]
 }
