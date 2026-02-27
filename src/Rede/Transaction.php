@@ -32,9 +32,9 @@ class Transaction implements RedeSerializable, RedeUnserializable
     private ?string $authorizationCode = null;
 
     /**
-     * @var int|null
+     * @var string|null Alphanumeric brand TID (up to 21 chars)
      */
-    private ?int $brandTid = null;
+    private ?string $brandTid = null;
 
     /**
      * @var Brand|null
@@ -195,6 +195,26 @@ class Transaction implements RedeSerializable, RedeUnserializable
      * @var string|null
      */
     private ?string $paymentFacilitatorID = null;
+
+    /**
+     * @var string|null
+     */
+    private ?string $orderId = null;
+
+    /**
+     * @var string|null
+     */
+    private ?string $cardToken = null;
+
+    /**
+     * @var string|null
+     */
+    private ?string $tokenCryptogram = null;
+
+    /**
+     * @var string|null
+     */
+    private ?string $transactionLinkId = null;
 
     /**
      * @var int|null
@@ -375,8 +395,13 @@ class Transaction implements RedeSerializable, RedeUnserializable
                 'softDescriptor' => $this->softDescriptor,
                 'subscription' => $this->subscription,
                 'origin' => $this->origin,
+                'brandTid' => $this->brandTid,
                 'distributorAffiliation' => $this->distributorAffiliation,
                 'storageCard' => $this->storageCard,
+                'orderId' => $this->orderId,
+                'cardToken' => $this->cardToken,
+                'tokenCryptogram' => $this->tokenCryptogram,
+                'transactionLinkId' => $this->transactionLinkId,
                 'urls' => $this->urls,
                 'iata' => $this->iata,
                 'additional' => $this->additional
@@ -908,6 +933,82 @@ class Transaction implements RedeSerializable, RedeUnserializable
     }
 
     /**
+     * @return string|null
+     */
+    public function getOrderId(): ?string
+    {
+        return $this->orderId;
+    }
+
+    /**
+     * @param string $orderId
+     *
+     * @return $this
+     */
+    public function setOrderId(string $orderId): static
+    {
+        $this->orderId = $orderId;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getCardToken(): ?string
+    {
+        return $this->cardToken;
+    }
+
+    /**
+     * @param string $cardToken Token do cofre de cartões (tokenizationId)
+     *
+     * @return $this
+     */
+    public function setCardToken(string $cardToken): static
+    {
+        $this->cardToken = $cardToken;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTokenCryptogram(): ?string
+    {
+        return $this->tokenCryptogram;
+    }
+
+    /**
+     * @param string $tokenCryptogram Criptograma do token de bandeira (Base64)
+     *
+     * @return $this
+     */
+    public function setTokenCryptogram(string $tokenCryptogram): static
+    {
+        $this->tokenCryptogram = $tokenCryptogram;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTransactionLinkId(): ?string
+    {
+        return $this->transactionLinkId;
+    }
+
+    /**
+     * @param string $transactionLinkId Correlaciona transações recorrentes/card-on-file Mastercard
+     *
+     * @return $this
+     */
+    public function setTransactionLinkId(string $transactionLinkId): static
+    {
+        $this->transactionLinkId = $transactionLinkId;
+        return $this;
+    }
+
+    /**
      * @param Device      $device
      * @param string      $onFailure
      * @param string      $mpi
@@ -935,19 +1036,19 @@ class Transaction implements RedeSerializable, RedeUnserializable
     }
 
     /**
-     * @return int|null
+     * @return string|null
      */
-    public function getBrandTid(): ?int
+    public function getBrandTid(): ?string
     {
         return $this->brandTid;
     }
 
     /**
-     * @param int $brandTid
+     * @param string $brandTid Alphanumeric brand TID for recurring/card-on-file transactions
      *
      * @return $this
      */
-    public function setBrandTid(int $brandTid): static
+    public function setBrandTid(string $brandTid): static
     {
         $this->brandTid = $brandTid;
         return $this;

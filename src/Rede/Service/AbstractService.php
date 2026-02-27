@@ -13,6 +13,10 @@ use RuntimeException;
 
 abstract class AbstractService
 {
+    /**
+     * @var OAuthServiceInterface|null OAuth provider; defaults to OAuthService (cURL) if not set.
+     */
+    private ?OAuthServiceInterface $oauthService = null;
     public const GET = 'GET';
     public const POST = 'POST';
     public const PUT = 'PUT';
@@ -35,6 +39,18 @@ abstract class AbstractService
      */
     public function __construct(protected Store $store, protected ?LoggerInterface $logger = null)
     {
+    }
+
+    /**
+     * Overrides the default cURL-based OAuth provider with a custom implementation.
+     *
+     * @param OAuthServiceInterface $oauthService
+     * @return $this
+     */
+    public function setOAuthService(OAuthServiceInterface $oauthService): static
+    {
+        $this->oauthService = $oauthService;
+        return $this;
     }
 
     /**
@@ -65,9 +81,14 @@ abstract class AbstractService
      *
      * @return Transaction
      * @throws RuntimeException
+     * @throws RedeException
      */
     protected function sendRequest(string $body = '', string $method = 'GET'): Transaction
     {
+        // Obtain OAuth 2.0 Bearer token (cached in Store)
+        $oauthService = $this->oauthService ?? new OAuthService($this->store);
+        $accessToken  = $oauthService->getAccessToken();
+
         $userAgent = $this->getUserAgent();
         $headers = [
             str_replace(
@@ -76,7 +97,8 @@ abstract class AbstractService
                 $userAgent
             ),
             'Accept: application/json',
-            'Transaction-Response: brand-return-opened'
+            'Transaction-Response: brand-return-opened',
+            sprintf('Authorization: Bearer %s', $accessToken),
         ];
 
         $curl = curl_init($this->store->getEnvironment()->getEndpoint($this->getService()));
@@ -84,12 +106,6 @@ abstract class AbstractService
         if (!$curl instanceof CurlHandle) {
             throw new RuntimeException('Was not possible to create a curl instance.');
         }
-
-        curl_setopt(
-            $curl,
-            CURLOPT_USERPWD,
-            sprintf('%s:%s', $this->store->getFiliation(), $this->store->getToken())
-        );
 
         curl_setopt($curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);

@@ -3,17 +3,19 @@
 namespace Rede;
 
 use Psr\Log\LoggerInterface;
+use Rede\Service\AbstractService;
 use Rede\Service\CancelTransactionService;
 use Rede\Service\CaptureTransactionService;
 use Rede\Service\CreateTransactionService;
 use Rede\Service\GetTransactionService;
+use Rede\Service\OAuthServiceInterface;
 
 /**
  * phpcs:disable Squiz.Classes.ValidClassName.NotCamelCaps
  */
 class eRede
 {
-    public const VERSION = '6.1.0';
+    public const VERSION = '2.0.0';
     public const USER_AGENT = 'eRede/' . eRede::VERSION . ' (PHP %s; Store %s; %s %s) %s';
 
     /**
@@ -32,8 +34,11 @@ class eRede
      * @param Store                $store
      * @param LoggerInterface|null $logger
      */
-    public function __construct(private readonly Store $store, private readonly ?LoggerInterface $logger = null)
-    {
+    public function __construct(
+        private readonly Store $store,
+        private readonly ?LoggerInterface $logger = null,
+        private readonly ?OAuthServiceInterface $oauthService = null
+    ) {
     }
 
     /**
@@ -56,6 +61,7 @@ class eRede
     {
         $service = new CreateTransactionService($this->store, $transaction, $this->logger);
         $service->platform($this->platform, $this->platformVersion);
+        $this->applyOAuthService($service);
 
         return $service->execute();
     }
@@ -83,6 +89,7 @@ class eRede
     {
         $service = new CancelTransactionService($this->store, $transaction, $this->logger);
         $service->platform($this->platform, $this->platformVersion);
+        $this->applyOAuthService($service);
 
         return $service->execute();
     }
@@ -108,6 +115,7 @@ class eRede
         $service = new GetTransactionService(store: $this->store, logger: $this->logger);
         $service->platform($this->platform, $this->platformVersion);
         $service->setTid($tid);
+        $this->applyOAuthService($service);
 
         return $service->execute();
     }
@@ -122,6 +130,7 @@ class eRede
         $service = new GetTransactionService(store: $this->store, logger: $this->logger);
         $service->platform($this->platform, $this->platformVersion);
         $service->setReference($reference);
+        $this->applyOAuthService($service);
 
         return $service->execute();
     }
@@ -140,6 +149,7 @@ class eRede
         $service->platform($this->platform, $this->platformVersion);
         $service->setTid($tid);
         $service->setRefund();
+        $this->applyOAuthService($service);
 
         return $service->execute();
     }
@@ -174,7 +184,20 @@ class eRede
     {
         $service = new CaptureTransactionService($this->store, $transaction, $this->logger);
         $service->platform($this->platform, $this->platformVersion);
+        $this->applyOAuthService($service);
 
         return $service->execute();
+    }
+
+    /**
+     * Propagates the custom OAuth provider (if any) to a service instance.
+     *
+     * @param AbstractService $service
+     */
+    private function applyOAuthService(AbstractService $service): void
+    {
+        if ($this->oauthService !== null) {
+            $service->setOAuthService($this->oauthService);
+        }
     }
 }

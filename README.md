@@ -1,24 +1,33 @@
-# SDK PHP
+# SDK PHP — eRede API v2
 
-SDK de integração eRede
+SDK oficial de integração eRede para PHP.
+
+> **v2** — Migrado para a API eRede v2 com autenticação **OAuth 2.0** (`client_credentials`).  
+> O suporte à autenticação Basic Auth (API v1) foi removido.
 
 # Funcionalidades
 
 Este SDK possui as seguintes funcionalidades:
-* Autorização
+
+* Autorização de transações (crédito e débito)
 * Captura
-* Consultas
-* Cancelamento
-* 3DS2
-* Zero dollar
-* iata
-* MCC dinâmico.
+* Consultas (por TID e por referência)
+* Cancelamento / Estorno
+* 3DS2 (autenticação de transações)
+* Zero dollar (validação de cartão)
+* IATA (transações aéreas)
+* MCC dinâmico
+* Tokenização de cartão (`cardToken` + `tokenCryptogram`)
+* Transações recorrentes e card-on-file (`transactionLinkId`, `brandTid`)
+* OAuth 2.0 com renovação automática de token (cache com buffer de 60 s)
 
 # Instalação
 
 ## Dependências
 
 * PHP >= 8.1
+* Extensão `curl` habilitada
+* Extensão `json` habilitada
 
 ## Instalando o SDK
 
@@ -72,6 +81,73 @@ basta exportar a variável de ambiente `REDE_DEBUG` com o valor 1:
 export REDE_DEBUG=1
 ```
 
+# Endpoints da API v2
+
+| Ambiente    | Transações                                                    | OAuth Token                                                          |
+|-------------|---------------------------------------------------------------|----------------------------------------------------------------------|
+| Produção    | `https://api.userede.com.br/erede/v2/transactions`            | `https://api.userede.com.br/redelabs/oauth2/token`                   |
+| Sandbox     | `https://sandbox-erede.useredecloud.com.br/v2/transactions`   | `https://rl7-sandbox-api.useredecloud.com.br/oauth2/token`           |
+
+# Autenticação OAuth 2.0
+
+A API v2 utiliza o fluxo **OAuth 2.0 `client_credentials`**. O SDK gerencia o ciclo de vida do token automaticamente:
+
+1. Antes de cada requisição, verifica se existe um token válido em cache.
+2. Se o token estiver ausente ou a menos de **60 segundos do vencimento**, um novo token é requisitado.
+3. O token recebido (TTL padrão: **1440 s / 24 min**) é armazenado internamente no objeto `Store`.
+4. As requisições de transação são enviadas com o header `Authorization: Bearer {token}`.
+
+Nenhuma configuração adicional é necessária — basta instanciar a `Store` normalmente com seu **PV** e **Token**:
+
+```php
+// Produção
+$store = new Store('SEU_PV', 'SEU_TOKEN', Environment::production());
+
+// Sandbox
+$store = new Store('SEU_PV', 'SEU_TOKEN', Environment::sandbox());
+```
+
+## Alternativa com Guzzle
+
+Por padrão, o SDK usa cURL para requisitar o token OAuth. Se o seu projeto já utiliza
+[`guzzlehttp/guzzle`](https://docs.guzzlephp.org), você pode usar o `GuzzleOAuthService`
+como implementação alternativa:
+
+```bash
+composer require guzzlehttp/guzzle
+```
+
+```php
+use Rede\Service\GuzzleOAuthService;
+
+$store   = new Store('SEU_PV', 'SEU_TOKEN', Environment::production());
+$eRede   = new eRede($store, logger: null, oauthService: new GuzzleOAuthService($store));
+
+$transaction = (new Transaction(20.99, 'pedido' . time()))
+    ->creditCard('5448280000000007', '235', '12', '2030', 'John Snow');
+
+$transaction = $eRede->create($transaction);
+```
+
+Ambas as implementações respeitam a interface `OAuthServiceInterface`, portanto qualquer
+solução customizada pode ser injetada da mesma forma:
+
+```php
+use Rede\Service\OAuthServiceInterface;
+
+class MeuOAuthService implements OAuthServiceInterface
+{
+    public function __construct(private readonly Store $store) {}
+
+    public function getAccessToken(): string
+    {
+        // sua lógica de obtenção/cache de token
+    }
+}
+
+$eRede = new eRede($store, oauthService: new MeuOAuthService($store));
+```
+
 # Utilizando
 
 ## Autorizando uma transação
@@ -89,7 +165,7 @@ $transaction = (new Transaction(20.99, 'pedido' . time()))->creditCard(
     '5448280000000007',
     '235',
     '12',
-    '2020',
+    '2030',
     'John Snow'
 );
 
@@ -116,7 +192,7 @@ $transaction = (new Transaction(20.99, 'pedido' . time()))->creditCard(
     '5448280000000007',
     '235',
     '12',
-    '2020',
+    '2030',
     'John Snow'
 )->capture(false);
 
@@ -143,7 +219,7 @@ $transaction = (new Transaction(20.99, 'pedido' . time()))->creditCard(
     '5448280000000007',
     '235',
     '12',
-    '2020',
+    '2030',
     'John Snow'
 );
 
@@ -173,7 +249,7 @@ $transaction = (new Transaction(20.99, 'pedido' . time()))->creditCard(
     '5448280000000007',
     '235',
     '12',
-    '2020',
+    '2030',
     'John Snow'
 )->additional(1234, 56);
 
@@ -200,7 +276,7 @@ $transaction = (new Transaction(20.99, 'pedido' . time()))->creditCard(
     '5448280000000007',
     '235',
     '12',
-    '2020',
+    '2030',
     'John Snow'
 )->mcc(
     'LOJADOZE',
@@ -236,7 +312,7 @@ $transaction = (new Transaction(20.99, 'pedido' . time()))->creditCard(
     '5448280000000007',
     '235',
     '12',
-    '2020',
+    '2030',
     'John Snow'
 )->iata('code123', '250');
 
@@ -344,7 +420,7 @@ $transaction = (new Transaction(25, 'pedido' . time()))->debitCard(
     '5277696455399733',
     '123',
     '01',
-    '2020',
+    '2030',
     'John Snow'
 );
 
@@ -369,3 +445,113 @@ if ($transaction->getReturnCode() == '220') {
     printf("Redirecione o cliente para \"%s\" para autenticação\n", $transaction->getThreeDSecure()->getUrl());
 }
 ```
+
+## Autorizando via Token de Cartão (Cofre)
+
+Utilize o `cardToken` (tokenizationId retornado pelo cofre de cartões da Rede) no lugar do número do cartão.  
+Para transações com token de bandeira (network token), informe também o `tokenCryptogram` (Base64).
+
+```php
+<?php
+$store = new Store('PV', 'TOKEN', Environment::production());
+
+$transaction = (new Transaction(20.99, 'pedido' . time()))
+    ->setCardToken('TOKEN_DO_COFRE')                // token armazenado no cofre Rede
+    ->setTokenCryptogram('CRIPTOGRAMA_BASE64');      // opcional — para network tokens de bandeira
+
+// Informe apenas os dados necessários (CVV+vencimento ainda exigidos pela bandeira)
+$transaction->creditCard(null, '235', '12', '2030', 'John Snow');
+
+$transaction = (new eRede($store))->create($transaction);
+
+if ($transaction->getReturnCode() == '00') {
+    printf("Transação aprovada com token; tid=%s\n", $transaction->getTid());
+}
+```
+
+## Transações Recorrentes e Card-on-File
+
+Para recorrência Mastercard e transações card-on-file, utilize o `transactionLinkId` para correlacionar as cobranças.  
+O campo `brandTid` (identificador da transação na bandeira, alfanumérico, até 21 caracteres) é retornado pela API.
+
+```php
+<?php
+$store = new Store('PV', 'TOKEN', Environment::production());
+
+// Primeira cobrança
+$transaction = (new Transaction(20.99, 'pedido' . time()))
+    ->creditCard('5448280000000007', '235', '12', '2030', 'John Snow')
+    ->capture();
+
+$transaction = (new eRede($store))->create($transaction);
+
+if ($transaction->getReturnCode() == '00') {
+    // Guarde o transactionLinkId para as cobranças subsequentes
+    $linkId = $transaction->getTransactionLinkId();
+    printf("tid=%s | transactionLinkId=%s\n", $transaction->getTid(), $linkId);
+}
+
+// Cobrança subsequente — informe o transactionLinkId da transação original
+$recurrentTransaction = (new Transaction(20.99, 'pedido' . time()))
+    ->setTransactionLinkId($linkId)
+    ->creditCard('5448280000000007', '235', '12', '2030', 'John Snow')
+    ->capture();
+
+$recurrentTransaction = (new eRede($store))->create($recurrentTransaction);
+```
+
+## Lendo campos novos na resposta (Brand v2)
+
+```php
+<?php
+$store = new Store('PV', 'TOKEN', Environment::production());
+
+$transaction = (new eRede($store))->get('TID123');
+
+$brand = $transaction->getBrand();
+
+if ($brand !== null) {
+    printf("Bandeira:              %s\n", $brand->getName());
+    printf("Código autorização:    %s\n", $brand->getAuthorizationCode());
+    printf("Merchant Advice Code:  %s\n", $brand->getMerchantAdviceCode());
+    printf("Brand TID:             %s\n", $brand->getBrandTid());
+    printf("Transaction Link ID:   %s\n", $brand->getTransactionLinkId());
+}
+```
+
+---
+
+# Changelog
+
+## v2.0.0 — 2026-02-27
+
+### Quebra de compatibilidade
+- **Autenticação**: removida a autenticação Basic Auth (`CURLOPT_USERPWD`). A API v2 exige **OAuth 2.0**.
+
+### Novas funcionalidades
+- **`OAuthServiceInterface`**: contrato injetável para provedores de token OAuth; permite substituir a implementação padrão (cURL) por qualquer outra sem alterar o código do SDK.
+- **`OAuthService`** (cURL): implementação padrão; obtém e renova o `access_token` via fluxo `client_credentials`; token armazenado em cache no `Store` com buffer de 60 s; `curl_close()` removido (deprecated no PHP 8.0+ com `CurlHandle`).
+- **`GuzzleOAuthService`**: implementação alternativa baseada em `guzzlehttp/guzzle ^7`; aceitada pelo construtor de `eRede` via `oauthService:` ou injetada diretamente em qualquer serviço.
+- **`AbstractService::setOAuthService()`**: permite injetar um provedor OAuth customizado em qualquer serviço individualmente.
+- **`eRede`**: novo parâmetro opcional `oauthService: OAuthServiceInterface` no construtor; propagado automaticamente para todos os serviços internos.
+- **`Environment`**: versão atualizada para `v2`; novos endpoints de sandbox e OAuth; método `getOAuthEndpoint()`.
+- **`Store`**: métodos `getAccessToken()`, `setAccessToken()`, `invalidateAccessToken()` para gerência do ciclo de vida do token.
+- **`Transaction`**: novos campos:
+  - `orderId` — código do pedido para rastreamento
+  - `cardToken` — token do cofre de cartões (substitui o número do cartão)
+  - `tokenCryptogram` — criptograma Base64 para network tokens de bandeira
+  - `transactionLinkId` — correlação entre transações recorrentes / card-on-file Mastercard
+  - `brandTid` — tipo alterado de `int` para `string` (alfanumérico, até 21 chars)
+- **`Brand`**: novos campos retornados pela API:
+  - `authorizationCode` — código de autorização do emissor
+  - `merchantAdviceCode` — MAC Mastercard (indica ação sugerida pelo emissor)
+  - `brandTid` — identificador da transação na bandeira
+  - `transactionLinkId` — correlação para recorrência Mastercard
+- **`composer.json`**: corrigido JSON inválido (vírgula ausente e campo `version` removido de `authors`); Guzzle adicionado como dependência sugerida (`suggest`).
+
+### Endpoints
+
+| Ambiente | Transações | OAuth |
+|---|---|---|
+| Produção | `https://api.userede.com.br/erede/v2/transactions` | `https://api.userede.com.br/redelabs/oauth2/token` |
+| Sandbox | `https://sandbox-erede.useredecloud.com.br/v2/transactions` | `https://rl7-sandbox-api.useredecloud.com.br/oauth2/token` |
