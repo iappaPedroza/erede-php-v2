@@ -31,12 +31,14 @@ Este SDK possui as seguintes funcionalidades:
 
 ## Instalando o SDK
 
+O pacote está disponível no [Packagist](https://packagist.org/packages/iappapedroza/erede-php-v2).
+
 Se já possui um arquivo `composer.json`, basta adicionar a seguinte dependência ao seu projeto:
 
 ```json
 {
 "require": {
-    "developersrede/erede-php": "*"
+    "iappapedroza/erede-php-v2": "^2.0"
 }
 }
 
@@ -51,7 +53,7 @@ composer install
 Alternativamente, você pode executar diretamente em seu terminal:
 
 ```
-composer require "developersrede/erede-php"
+composer require iappapedroza/erede-php-v2:^2.0
 ```
 
 # Testes
@@ -118,7 +120,7 @@ composer require guzzlehttp/guzzle
 ```
 
 ```php
-use Rede\Service\GuzzleOAuthService;
+use RedeV2\Service\GuzzleOAuthService;
 
 $store   = new Store('SEU_PV', 'SEU_TOKEN', Environment::production());
 $eRede   = new eRede($store, logger: null, oauthService: new GuzzleOAuthService($store));
@@ -133,7 +135,7 @@ Ambas as implementações respeitam a interface `OAuthServiceInterface`, portant
 solução customizada pode ser injetada da mesma forma:
 
 ```php
-use Rede\Service\OAuthServiceInterface;
+use RedeV2\Service\OAuthServiceInterface;
 
 class MeuOAuthService implements OAuthServiceInterface
 {
@@ -150,6 +152,15 @@ $eRede = new eRede($store, oauthService: new MeuOAuthService($store));
 
 # Utilizando
 
+> Todos os exemplos assumem os imports do namespace `RedeV2`. Adicione no topo de cada arquivo:
+> ```php
+> use RedeV2\Store;
+> use RedeV2\Environment;
+> use RedeV2\Transaction;
+> use RedeV2\eRede;
+> // demais classes conforme necessário: SubMerchant, Device, Url, etc.
+> ```
+
 ## Autorizando uma transação
 
 ```php
@@ -158,7 +169,7 @@ $eRede = new eRede($store, oauthService: new MeuOAuthService($store));
 $store = new Store('PV', 'TOKEN', Environment::production());
 
 // Configuração da loja em modo sandbox
-// $store = new \Rede\Store('PV', 'TOKEN', \Rede\Environment::sandbox());
+// $store = new Store('PV', 'TOKEN', Environment::sandbox());
 
 // Transação que será autorizada
 $transaction = (new Transaction(20.99, 'pedido' . time()))->creditCard(
@@ -185,7 +196,7 @@ Por padrão, a transação é capturada automaticamente; caso seja necessário a
 $store = new Store('PV', 'TOKEN', Environment::production());
 
 // Configuração da loja em modo sandbox
-// $store = new \Rede\Store('PV', 'TOKEN', \Rede\Environment::sandbox());
+// $store = new Store('PV', 'TOKEN', Environment::sandbox());
 
 // Transação que será autorizada
 $transaction = (new Transaction(20.99, 'pedido' . time()))->creditCard(
@@ -212,7 +223,7 @@ if ($transaction->getReturnCode() == '00') {
 $store = new Store('PV', 'TOKEN', Environment::production());
 
 // Configuração da loja em modo sandbox
-// $store = new \Rede\Store('PV', 'TOKEN', \Rede\Environment::sandbox());
+// $store = new Store('PV', 'TOKEN', Environment::sandbox());
 
 // Transação que será autorizada
 $transaction = (new Transaction(20.99, 'pedido' . time()))->creditCard(
@@ -242,7 +253,7 @@ if ($transaction->getReturnCode() == '00') {
 $store = new Store('PV', 'TOKEN', Environment::production());
 
 // Configuração da loja em modo sandbox
-// $store = new \Rede\Store('PV', 'TOKEN', \Rede\Environment::sandbox());
+// $store = new Store('PV', 'TOKEN', Environment::sandbox());
 
 // Transação que será autorizada
 $transaction = (new Transaction(20.99, 'pedido' . time()))->creditCard(
@@ -269,7 +280,7 @@ if ($transaction->getReturnCode() == '00') {
 $store = new Store('PV', 'TOKEN', Environment::production());
 
 // Configuração da loja em modo sandbox
-// $store = new \Rede\Store('PV', 'TOKEN', \Rede\Environment::sandbox());
+// $store = new Store('PV', 'TOKEN', Environment::sandbox());
 
 // Transação que será autorizada
 $transaction = (new Transaction(20.99, 'pedido' . time()))->creditCard(
@@ -305,7 +316,7 @@ if ($transaction->getReturnCode() == '00') {
 $store = new Store('PV', 'TOKEN', Environment::production());
 
 // Configuração da loja em modo sandbox
-// $store = new \Rede\Store('PV', 'TOKEN', \Rede\Environment::sandbox());
+// $store = new Store('PV', 'TOKEN', Environment::sandbox());
 
 // Transação que será autorizada
 $transaction = (new Transaction(20.99, 'pedido' . time()))->creditCard(
@@ -332,7 +343,7 @@ if ($transaction->getReturnCode() == '00') {
 $store = new Store('PV', 'TOKEN', Environment::production());
 
 // Configuração da loja em modo sandbox
-// $store = new \Rede\Store('PV', 'TOKEN', \Rede\Environment::sandbox());
+// $store = new Store('PV', 'TOKEN', Environment::sandbox());
 
 // Transação que será capturada
 $transaction =  (new eRede($store))->capture((new Transaction(20.99))->setTid('TID123'));
@@ -350,7 +361,7 @@ if ($transaction->getReturnCode() == '00') {
 $store = new Store('PV', 'TOKEN', Environment::production());
 
 // Configuração da loja em modo sandbox
-// $store = new \Rede\Store('PV', 'TOKEN', \Rede\Environment::sandbox());
+// $store = new Store('PV', 'TOKEN', Environment::sandbox());
 
 // Transação que será cancelada
 $transaction = (new eRede($store))->cancel((new Transaction(20.99))->setTid('TID123'));
@@ -368,7 +379,7 @@ if ($transaction->getReturnCode() == '359') {
 $store = new Store('PV', 'TOKEN', Environment::production());
 
 // Configuração da loja em modo sandbox
-// $store = new \Rede\Store('PV', 'TOKEN', \Rede\Environment::sandbox());
+// $store = new Store('PV', 'TOKEN', Environment::sandbox());
 
 $transaction = (new eRede($store))->get('TID123');
 
@@ -383,7 +394,7 @@ printf("O status atual da autorização é %s\n", $transaction->getAuthorization
 $store = new Store('PV', 'TOKEN', Environment::production());
 
 // Configuração da loja em modo sandbox
-// $store = new \Rede\Store('PV', 'TOKEN', \Rede\Environment::sandbox());
+// $store = new Store('PV', 'TOKEN', Environment::sandbox());
 
 $transaction = (new eRede($store))->getByReference('pedido123');
 
@@ -398,7 +409,7 @@ printf("O status atual da autorização é %s\n", $transaction->getAuthorization
 $store = new Store('PV', 'TOKEN', Environment::production());
 
 // Configuração da loja em modo sandbox
-// $store = new \Rede\Store('PV', 'TOKEN', \Rede\Environment::sandbox());
+// $store = new Store('PV', 'TOKEN', Environment::sandbox());
 
 $transaction = (new eRede($store))->getRefunds('TID123');
 
@@ -413,7 +424,7 @@ printf("O status atual da autorização é %s\n", $transaction->getAuthorization
 $store = new Store('PV', 'TOKEN', Environment::production());
 
 // Configuração da loja em modo sandbox
-// $store = new \Rede\Store('PV', 'TOKEN', \Rede\Environment::sandbox());
+// $store = new Store('PV', 'TOKEN', Environment::sandbox());
 
 // Configura a transação que será autorizada após a autenticação
 $transaction = (new Transaction(25, 'pedido' . time()))->debitCard(
