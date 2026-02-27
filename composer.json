@@ -24,7 +24,12 @@
   },
   "autoload": {
     "psr-4": {
-      "Rede\\": "src/Rede"
+      "RedeV2\\": "src/RedeV2"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "RedeV2\\": "test/RedeV2"
     }
   },
   "authors": [
