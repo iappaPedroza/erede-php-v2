@@ -1,5 +1,5 @@
 {
-  "name": "iappapedroza/erede-php",
+  "name": "iappapedroza/erede-php-v2",
   "version": "2.0.0",
   "description": "PHP SDK para integração com a API eRede v2 (OAuth 2.0)",
   "minimum-stability": "stable",
