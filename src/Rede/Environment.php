@@ -8,7 +8,7 @@ class Environment implements RedeSerializable
 {
     public const PRODUCTION = 'https://api.userede.com.br/erede';
     public const SANDBOX = 'https://api.userede.com.br/desenvolvedores';
-    public const VERSION = 'v1';
+    public const VERSION = 'v2';
 
     /**
      * @var string|null
