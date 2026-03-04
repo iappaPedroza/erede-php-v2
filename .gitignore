@@ -4,3 +4,14 @@ composer.lock
 
 .phpunit.result.cache
 .php-cs-fixer.cache
+
+# Arquivos locais de teste/debug (não publicar)
+docs/RELATORIO_EREDE_V2_INTEGRACAO.md
+docs/*.pdf
+docs/test_erede_v2.php
+docs/test_erede_v2_api.php
+docs/test_erede_v2_complete.php
+docs/test_erede_v2_debug.php
+docs/test_erede_v2_final.php
+docs/test_erede_v2_simple.php
+docs/test_erede_v2_variations.php
