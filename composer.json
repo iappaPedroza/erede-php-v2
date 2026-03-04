@@ -23,12 +23,12 @@
   },
   "autoload": {
     "psr-4": {
-      "RedeV2\\": "src/RedeV2"
+      "ItsTecnologiaErede\\": "src/ItsTecnologiaErede"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "RedeV2\\": "test/RedeV2"
+      "ItsTecnologiaErede\\": "test/ItsTecnologiaErede"
     }
   },
   "authors": [

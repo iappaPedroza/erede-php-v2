@@ -120,7 +120,7 @@ composer require guzzlehttp/guzzle
 ```
 
 ```php
-use RedeV2\Service\GuzzleOAuthService;
+use ItsTecnologiaErede\Service\GuzzleOAuthService;
 
 $store   = new Store('SEU_PV', 'SEU_TOKEN', Environment::production());
 $eRede   = new eRede($store, logger: null, oauthService: new GuzzleOAuthService($store));
@@ -135,7 +135,7 @@ Ambas as implementações respeitam a interface `OAuthServiceInterface`, portant
 solução customizada pode ser injetada da mesma forma:
 
 ```php
-use RedeV2\Service\OAuthServiceInterface;
+use ItsTecnologiaErede\Service\OAuthServiceInterface;
 
 class MeuOAuthService implements OAuthServiceInterface
 {
@@ -152,12 +152,12 @@ $eRede = new eRede($store, oauthService: new MeuOAuthService($store));
 
 # Utilizando
 
-> Todos os exemplos assumem os imports do namespace `RedeV2`. Adicione no topo de cada arquivo:
+> Todos os exemplos assumem os imports do namespace `ItsTecnologiaErede`. Adicione no topo de cada arquivo:
 > ```php
-> use RedeV2\Store;
-> use RedeV2\Environment;
-> use RedeV2\Transaction;
-> use RedeV2\eRede;
+> use ItsTecnologiaErede\Store;
+> use ItsTecnologiaErede\Environment;
+> use ItsTecnologiaErede\Transaction;
+> use ItsTecnologiaErede\eRede;
 > // demais classes conforme necessário: SubMerchant, Device, Url, etc.
 > ```
 
